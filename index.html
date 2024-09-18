@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terrace Park Beer Olympics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 150px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            margin-left: 10px;
+        }
+        .player-management {
+            margin-top: 20px;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .player-management > div {
+            margin-bottom: 10px;
+        }
+        .player-management h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .total-score {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Terrace Park Beer Olympics</h1>
+    <div>
+        <select id="playerSelect"></select>
+        <select id="gameSelect">
+            <option value="KanJam1">KanJam 1</option>
+            <option value="KanJam2">KanJam 2</option>
+            <option value="CornHole1">CornHole 1</option>
+            <option value="CornHole2">CornHole 2</option>
+            <option value="Beersbie1">Beersbie 1</option>
+            <option value="Beersbie2">Beersbie 2</option>
+            <option value="Bonus">Bonus</option>
+        </select>
+        <input type="number" id="scoreInput" min="0" max="21" placeholder="Score (0-21)">
+        <button onclick="addScore()">Add Score</button>
+    </div>
+    <table id="scoreTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable('name')">Player</th>
+                <th>KanJam 1</th>
+                <th>KanJam 2</th>
+                <th>CornHole 1</th>
+                <th>CornHole 2</th>
+                <th>Beersbie 1</th>
+                <th>Beersbie 2</th>
+                <th>Bonus</th>
+                <th onclick="sortTable('total')">Total</th>
+            </tr>
+        </thead>
+        <tbody id="scoreTableBody">
+        </tbody>
+    </table>
+    <div class="player-management">
+        <h2>Player Management</h2>
+        <div>
+            <input type="text" id="nameInput" placeholder="Enter a player name">
+            <button onclick="addPlayer()">Add Player</button>
+        </div>
+        <div>
+            <select id="removePlayerSelect"></select>
+            <button onclick="removePlayer()">Remove Player</button>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+        const games = ['KanJam1', 'KanJam2', 'CornHole1', 'CornHole2', 'Beersbie1', 'Beersbie2', 'Bonus'];
+
+        function addPlayer() {
+            const nameInput = document.getElementById('nameInput');
+            const name = nameInput.value.trim();
+            if (name && !players.some(p => p.name === name)) {
+                players.push({
+                    name: name,
+                    scores: {
+                        KanJam1: 0, KanJam2: 0, CornHole1: 0, CornHole2: 0,
+                        Beersbie1: 0, Beersbie2: 0, Bonus: 0
+                    },
+                    total: 0
+                });
+                nameInput.value = '';
+                updateTable();
+                updatePlayerSelects();
+            }
+        }
+
+        function addScore() {
+            const playerSelect = document.getElementById('playerSelect');
+            const gameSelect = document.getElementById('gameSelect');
+            const scoreInput = document.getElementById('scoreInput');
+            const playerName = playerSelect.value;
+            const game = gameSelect.value;
+            const score = parseInt(scoreInput.value);
+
+            if (playerName && game && !isNaN(score) && score >= 0 && score <= 21) {
+                const player = players.find(p => p.name === playerName);
+                if (player) {
+                    player.scores[game] = score;
+                    player.total = Object.values(player.scores).reduce((a, b) => a + b, 0);
+                    scoreInput.value = '';
+                    updateTable();
+                }
+            }
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('scoreTableBody');
+            tableBody.innerHTML = '';
+            for (let player of players) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = player.name;
+                games.forEach(game => {
+                    row.insertCell().textContent = player.scores[game];
+                });
+                const totalCell = row.insertCell();
+                totalCell.textContent = player.total;
+                totalCell.classList.add('total-score');
+            }
+        }
+
+        function updatePlayerSelects() {
+            const playerSelect = document.getElementById('playerSelect');
+            const removePlayerSelect = document.getElementById('removePlayerSelect');
+            playerSelect.innerHTML = '';
+            removePlayerSelect.innerHTML = '';
+            for (let player of players) {
+                const option1 = document.createElement('option');
+                option1.value = player.name;
+                option1.textContent = player.name;
+                playerSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = player.name;
+                option2.textContent = player.name;
+                removePlayerSelect.appendChild(option2);
+            }
+        }
+
+        function removePlayer() {
+            const removePlayerSelect = document.getElementById('removePlayerSelect');
+            const playerName = removePlayerSelect.value;
+            if (playerName) {
+                players = players.filter(p => p.name !== playerName);
+                updateTable();
+                updatePlayerSelects();
+            }
+        }
+
+        function sortTable(column) {
+            if (column === 'name') {
+                players.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (column === 'total') {
+                players.sort((a, b) => b.total - a.total);
+            }
+            updateTable();
+        }
+    </script>
+</body>
+</html>
